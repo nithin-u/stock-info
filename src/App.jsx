@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './layouts/Layout';
 import HomePage from './pages/HomePage';
+import PennyStocks from './pages/PennyStocks';
+import MutualFunds from './pages/MutualFunds';
 import StockDetails from './pages/StockDetails';
 import AboutPage from './pages/AboutPage';
 import Watchlist from './pages/Watchlist';
@@ -24,6 +26,20 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <HomePage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/penny-stocks" element={
+            <ProtectedRoute>
+              <Layout>
+                <PennyStocks />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/mutual-funds" element={
+            <ProtectedRoute>
+              <Layout>
+                <MutualFunds />
               </Layout>
             </ProtectedRoute>
           } />

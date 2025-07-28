@@ -1,487 +1,349 @@
-import { useState, useEffect } from 'react';
-import SearchBar from '../components/SearchBar';
-import IndianMarketFilters from '../components/IndianMarketFilters';
-import IndianStockCard from '../components/IndianStockCard';
-import IndianMarketOverview from '../components/IndianMarketOverview';
-import SkeletonLoader from '../components/SkeletonLoader';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import FadeInAnimation from '../components/FadeInAnimation';
-import ErrorMessage from '../components/ErrorMessage';
-import { useDebounce } from '../hooks/useDebounce';
 
 export default function HomePage() {
-  const [stocks, setStocks] = useState([]);
-  const [mutualFunds, setMutualFunds] = useState([]);
-  const [filteredStocks, setFilteredStocks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Penny Stocks');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // Debounced search for better performance
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
-
-  // Mock Indian market data - NSE Penny Stocks
-  const mockIndianStocks = [
-    {
-      ticker: 'IDEA',
-      name: 'Vodafone Idea Limited',
-      price: 7.20,
-      change: -0.15,
-      changePercent: -2.04,
-      category: 'Penny Stocks',
-      sector: 'Telecommunications',
-      marketCap: '₹51,837 Cr',
-      volume: '78.01 Cr',
-      exchange: 'NSE'
+  // Indian market indices data (keep your existing data)
+  const marketIndices = [
+    // ... your existing market indices data
+    { 
+      name: 'NIFTY 50', 
+      value: '24,010.90', 
+      change: '+285.75', 
+      changePercent: '+1.20%', 
+      positive: true,
+      description: 'Top 50 large-cap stocks'
     },
-    {
-      ticker: 'IOB',
-      name: 'Indian Overseas Bank',
-      price: 38.45,
-      change: -1.26,
-      changePercent: -3.18,
-      category: 'Penny Stocks',
-      sector: 'Banking',
-      marketCap: '₹21,456 Cr',
-      volume: '2.34 Cr',
-      exchange: 'NSE'
+    { 
+      name: 'SENSEX', 
+      value: '78,765.86', 
+      change: '+628.50', 
+      changePercent: '+0.81%', 
+      positive: true,
+      description: 'BSE benchmark index'
     },
-    {
-      ticker: 'YESBANK',
-      name: 'Yes Bank Limited',
-      price: 19.60,
-      change: 0.45,
-      changePercent: 2.35,
-      category: 'Penny Stocks',
-      sector: 'Banking',
-      marketCap: '₹61,523 Cr',
-      volume: '5.67 Cr',
-      exchange: 'NSE'
+    { 
+      name: 'BANK NIFTY', 
+      value: '51,247.35', 
+      change: '-156.25', 
+      changePercent: '-0.30%', 
+      positive: false,
+      description: 'Banking sector index'
     },
-    {
-      ticker: 'SUZLON',
-      name: 'Suzlon Energy Limited',
-      price: 68.75,
-      change: 2.15,
-      changePercent: 3.23,
-      category: 'Penny Stocks',
-      sector: 'Renewable Energy',
-      marketCap: '₹9,234 Cr',
-      volume: '1.23 Cr',
-      exchange: 'NSE'
+    { 
+      name: 'NIFTY IT', 
+      value: '40,156.45', 
+      change: '+845.30', 
+      changePercent: '+2.15%', 
+      positive: true,
+      description: 'IT sector index'
     },
-    {
-      ticker: 'RPOWER',
-      name: 'Reliance Power Limited',
-      price: 15.30,
-      change: -0.85,
-      changePercent: -5.27,
-      category: 'Penny Stocks',
-      sector: 'Power',
-      marketCap: '₹3,456 Cr',
-      volume: '8.90 Cr',
-      exchange: 'NSE'
+    { 
+      name: 'NIFTY AUTO', 
+      value: '23,456.80', 
+      change: '-124.45', 
+      changePercent: '-0.53%', 
+      positive: false,
+      description: 'Automobile sector index'
     },
-    {
-      ticker: 'JPASSOCIAT',
-      name: 'Jaiprakash Associates Ltd',
-      price: 4.85,
-      change: 0.25,
-      changePercent: 5.43,
-      category: 'Penny Stocks',
-      sector: 'Construction',
-      marketCap: '₹2,890 Cr',
-      volume: '12.45 Cr',
-      exchange: 'NSE'
-    },
-    {
-      ticker: 'ZEEL',
-      name: 'Zee Entertainment Enterprises',
-      price: 142.30,
-      change: -2.45,
-      changePercent: -1.69,
-      category: 'Penny Stocks',
-      sector: 'Media & Entertainment',
-      marketCap: '₹13,678 Cr',
-      volume: '4.23 Cr',
-      exchange: 'NSE'
-    },
-    {
-      ticker: 'SAIL',
-      name: 'Steel Authority of India',
-      price: 87.65,
-      change: 1.75,
-      changePercent: 2.04,
-      category: 'Penny Stocks',
-      sector: 'Steel',
-      marketCap: '₹36,789 Cr',
-      volume: '7.89 Cr',
-      exchange: 'NSE'
-    },
-    {
-      ticker: 'COALINDIA',
-      name: 'Coal India Limited',
-      price: 245.80,
-      change: 3.20,
-      changePercent: 1.32,
-      category: 'Penny Stocks',
-      sector: 'Mining',
-      marketCap: '₹1,52,345 Cr',
-      volume: '3.45 Cr',
-      exchange: 'NSE'
-    },
-    {
-      ticker: 'ONGC',
-      name: 'Oil and Natural Gas Corporation',
-      price: 198.45,
-      change: -1.85,
-      changePercent: -0.92,
-      category: 'Penny Stocks',
-      sector: 'Oil & Gas',
-      marketCap: '₹2,49,678 Cr',
-      volume: '5.67 Cr',
-      exchange: 'NSE'
+    { 
+      name: 'NIFTY PHARMA', 
+      value: '18,234.65', 
+      change: '+298.75', 
+      changePercent: '+1.67%', 
+      positive: true,
+      description: 'Pharmaceutical sector index'
     }
   ];
 
-  // Mock Indian Mutual Funds data
-  const mockMutualFunds = [
-    {
-      ticker: 'SBI-BLUECHIP',
-      name: 'SBI Bluechip Fund',
-      nav: 67.89,
-      price: 67.89, // For consistent interface
-      change: 1.23,
-      changePercent: 1.85,
-      category: 'Mutual Funds',
-      fundType: 'Large Cap',
-      sector: 'Large Cap', // For consistent interface
-      marketCap: '₹45,678 Cr', // Using AUM
-      aum: '₹45,678 Cr',
-      volume: '1.75%', // Using expense ratio
-      expense: '1.75%',
-      exchange: 'AMFI'
-    },
-    {
-      ticker: 'HDFC-TOP100',
-      name: 'HDFC Top 100 Fund',
-      nav: 789.45,
-      price: 789.45,
-      change: -2.34,
-      changePercent: -0.30,
-      category: 'Mutual Funds',
-      fundType: 'Large Cap',
-      sector: 'Large Cap',
-      marketCap: '₹67,890 Cr',
-      aum: '₹67,890 Cr',
-      volume: '1.95%',
-      expense: '1.95%',
-      exchange: 'AMFI'
-    },
-    {
-      ticker: 'ICICI-MIDCAP',
-      name: 'ICICI Prudential Mid Cap Fund',
-      nav: 234.56,
-      price: 234.56,
-      change: 4.67,
-      changePercent: 2.03,
-      category: 'Mutual Funds',
-      fundType: 'Mid Cap',
-      sector: 'Mid Cap',
-      marketCap: '₹23,456 Cr',
-      aum: '₹23,456 Cr',
-      volume: '2.25%',
-      expense: '2.25%',
-      exchange: 'AMFI'
-    },
-    {
-      ticker: 'AXIS-SMALLCAP',
-      name: 'Axis Small Cap Fund',
-      nav: 56.78,
-      price: 56.78,
-      change: 0.89,
-      changePercent: 1.59,
-      category: 'Mutual Funds',
-      fundType: 'Small Cap',
-      sector: 'Small Cap',
-      marketCap: '₹12,345 Cr',
-      aum: '₹12,345 Cr',
-      volume: '2.15%',
-      expense: '2.15%',
-      exchange: 'AMFI'
-    },
-    {
-      ticker: 'UTI-EQUITY',
-      name: 'UTI Equity Fund',
-      nav: 345.67,
-      price: 345.67,
-      change: -1.23,
-      changePercent: -0.35,
-      category: 'Mutual Funds',
-      fundType: 'Large Cap',
-      sector: 'Large Cap',
-      marketCap: '₹34,567 Cr',
-      aum: '₹34,567 Cr',
-      volume: '1.85%',
-      expense: '1.85%',
-      exchange: 'AMFI'
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      // For now, redirect to penny stocks with search term
+      window.location.href = `/penny-stocks?search=${encodeURIComponent(searchTerm)}`;
     }
-  ];
-
-  // Simulate API call for Indian market data
-  useEffect(() => {
-    const fetchIndianMarketData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Simulate occasional error (uncomment to test error handling)
-        // if (Math.random() < 0.1) {
-        //   throw new Error('Failed to fetch Indian market data');
-        // }
-        
-        setStocks(mockIndianStocks);
-        setMutualFunds(mockMutualFunds);
-        
-        // Set initial display based on selected category
-        if (selectedCategory === 'Penny Stocks') {
-          setFilteredStocks(mockIndianStocks);
-        } else if (selectedCategory === 'Mutual Funds') {
-          setFilteredStocks(mockMutualFunds);
-        } else {
-          // Filter by category for other types
-          const filteredByCategory = mockIndianStocks.filter(stock => 
-            stock.sector.toLowerCase().includes(selectedCategory.toLowerCase().replace(' cap', ''))
-          );
-          setFilteredStocks(filteredByCategory);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchIndianMarketData();
-  }, []);
-
-  // Filter logic for Indian market with debounced search
-  useEffect(() => {
-    let allData;
-    
-    if (selectedCategory === 'Penny Stocks') {
-      allData = stocks;
-    } else if (selectedCategory === 'Mutual Funds') {
-      allData = mutualFunds;
-    } else {
-      // Filter by cap type (Small Cap, Mid Cap, Large Cap)
-      allData = selectedCategory === 'Small Cap' || selectedCategory === 'Mid Cap' || selectedCategory === 'Large Cap'
-        ? [...stocks, ...mutualFunds].filter(item => 
-            item.sector?.toLowerCase().includes(selectedCategory.toLowerCase().replace(' cap', '')) ||
-            item.fundType?.toLowerCase().includes(selectedCategory.toLowerCase().replace(' cap', ''))
-          )
-        : stocks;
-    }
-    
-    let filtered = allData;
-
-    if (debouncedSearchTerm) {
-      filtered = filtered.filter(item => 
-        item.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        item.ticker.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        item.sector?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-      );
-    }
-
-    setFilteredStocks(filtered);
-  }, [stocks, mutualFunds, selectedCategory, debouncedSearchTerm]);
-
-  const handleRetry = () => {
-    window.location.reload();
   };
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <ErrorMessage 
-            title="Failed to load Indian market data"
-            message={error}
-            onRetry={handleRetry}
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section - Indian Market Theme */}
-      <div className="bg-gradient-to-r from-orange-500 to-green-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-green-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
           <FadeInAnimation>
             <div className="text-center">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-                🇮🇳 Indian Stock Market Dashboard
-              </h1>
-              <p className="text-lg sm:text-xl text-orange-100 max-w-3xl mx-auto mb-8">
-                Track top NSE penny stocks and mutual funds with real-time data, 
-                comprehensive analysis, and Indian market insights.
+              {/* Website Brand */}
+              <div className="flex items-center justify-center space-x-4 mb-8">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                  <span className="text-white font-bold text-2xl">SI</span>
+                </div>
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white">
+                  Stock Info
+                </h1>
+              </div>
+              
+              {/* Website Description */}
+              <p className="text-xl sm:text-2xl text-orange-100 max-w-4xl mx-auto mb-4 leading-relaxed">
+                Your comprehensive platform for Indian stock market insights
               </p>
+              <p className="text-lg text-orange-200 max-w-3xl mx-auto mb-12 leading-relaxed">
+                Discover penny stocks, track mutual funds, monitor market indices, and build your investment portfolio with real-time data from NSE and BSE markets.
+              </p>
+              
+              {/* Explore More Button */}
+              <FadeInAnimation delay={300}>
+                <button 
+                  onClick={() => document.getElementById('search-section').scrollIntoView({ behavior: 'smooth' })}
+                  className="inline-flex items-center px-8 py-4 bg-white text-orange-600 font-bold text-lg rounded-xl hover:bg-orange-50 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  <span>Explore More</span>
+                  <svg className="ml-3 w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </button>
+              </FadeInAnimation>
             </div>
-          </FadeInAnimation>
-          
-          {/* Indian Market Overview */}
-          <FadeInAnimation delay={200}>
-            <IndianMarketOverview />
           </FadeInAnimation>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Search and Category Filters */}
-        <FadeInAnimation delay={300}>
-          <div className="mb-6 sm:mb-8 space-y-4 sm:space-y-6">
-            <SearchBar 
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              placeholder="Search NSE stocks, mutual funds, or sectors..."
-            />
-            <IndianMarketFilters 
-              selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
-            />
-          </div>
-        </FadeInAnimation>
-
-        {/* Results Header */}
-        <FadeInAnimation delay={400}>
-          <div className="mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 flex items-center">
-              <span className="mr-2">
-                {selectedCategory === 'Penny Stocks' ? '🪙' : 
-                 selectedCategory === 'Mutual Funds' ? '📊' : '📈'}
-              </span>
-              {selectedCategory} - NSE/AMFI
-            </h2>
-            <p className="text-sm sm:text-base text-gray-600">
-              {loading ? (
-                <span className="flex items-center">
-                  <span className="animate-spin mr-2">⏳</span>
-                  Loading Indian market data...
-                </span>
-              ) : (
-                <>
-                  Showing <span className="font-semibold text-orange-600">{filteredStocks.length}</span> {selectedCategory.toLowerCase()}
-                  {debouncedSearchTerm && (
-                    <span> matching <span className="font-semibold text-blue-600">"{debouncedSearchTerm}"</span></span>
-                  )}
-                </>
-              )}
-            </p>
-          </div>
-        </FadeInAnimation>
-
-        {/* Indian Market Stats */}
-        <FadeInAnimation delay={450}>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white rounded-lg shadow-md p-4 text-center hover:shadow-lg transition-shadow">
-              <div className="text-2xl mb-2">🪙</div>
-              <div className="text-2xl font-bold text-gray-900">{stocks.length}+</div>
-              <div className="text-sm text-gray-600">Penny Stocks</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-4 text-center hover:shadow-lg transition-shadow">
-              <div className="text-2xl mb-2">📊</div>
-              <div className="text-2xl font-bold text-gray-900">{mutualFunds.length}+</div>
-              <div className="text-sm text-gray-600">Mutual Funds</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-4 text-center hover:shadow-lg transition-shadow">
-              <div className="text-2xl mb-2">👥</div>
-              <div className="text-2xl font-bold text-gray-900">50K+</div>
-              <div className="text-sm text-gray-600">Active Users</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-4 text-center hover:shadow-lg transition-shadow">
-              <div className="text-2xl mb-2">⚡</div>
-              <div className="text-2xl font-bold text-gray-900">Live</div>
-              <div className="text-sm text-gray-600">Market Data</div>
-            </div>
-          </div>
-        </FadeInAnimation>
-
-
-        {/* Stock/MF Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {[...Array(8)].map((_, i) => (
-              <SkeletonLoader key={i} type="card" />
-            ))}
-          </div>
-        ) : (
-          <FadeInAnimation delay={500}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {filteredStocks.map((item, index) => (
-                <FadeInAnimation key={item.ticker} delay={index * 50}>
-                  <IndianStockCard stock={item} />
-                </FadeInAnimation>
-              ))}
-            </div>
-          </FadeInAnimation>
-        )}
-
-        {/* No Results Message */}
-        {filteredStocks.length === 0 && !loading && !error && (
+      {/* MOVED SEARCH SECTION - RIGHT AFTER HERO */}
+      <div id="search-section" className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeInAnimation>
-            <div className="text-center py-12 sm:py-20">
-              <div className="text-gray-400 text-5xl sm:text-6xl mb-4">
-                {selectedCategory === 'Mutual Funds' ? '📊' : '📈'}
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No {selectedCategory.toLowerCase()} found
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Try adjusting your search criteria or explore different categories.
+            <div className="text-center">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                Search Anything
+              </h2>
+              <p className="text-xl text-gray-600 mb-8">
+                Find stocks, mutual funds, or market information instantly
               </p>
-              <div className="space-x-4">
-                <button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedCategory('Penny Stocks');
-                  }}
-                  className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
-                >
-                  Reset Filters
-                </button>
-                <button
-                  onClick={() => setSelectedCategory('Mutual Funds')}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                >
-                  Browse Mutual Funds
-                </button>
+              
+              <div className="max-w-2xl mx-auto">
+                <form onSubmit={handleSearch} className="relative">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Search for stocks, mutual funds, or companies..."
+                      className="block w-full pl-12 pr-32 py-4 text-lg border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent shadow-lg"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center">
+                      <button
+                        type="submit"
+                        className="mr-2 px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors duration-200"
+                      >
+                        Search
+                      </button>
+                    </div>
+                  </div>
+                </form>
+                
+                {/* Quick Search Suggestions */}
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <span className="text-sm text-gray-500">Popular searches:</span>
+                  {['IDEA', 'YESBANK', 'SBI Mutual Fund', 'NIFTY 50', 'Banking Stocks'].map((term) => (
+                    <button
+                      key={term}
+                      onClick={() => setSearchTerm(term)}
+                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-colors"
+                    >
+                      {term}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </FadeInAnimation>
-        )}
+        </div>
+      </div>
 
-        {/* Market Disclaimer */}
-        <FadeInAnimation delay={600}>
-          <div className="mt-12 bg-gradient-to-r from-orange-50 to-green-50 border border-orange-200 rounded-lg p-6">
-            <div className="flex items-start space-x-3">
-              <div className="text-2xl">⚠️</div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Investment Disclaimer</h3>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  This platform is for educational and informational purposes only. All stock prices, mutual fund NAVs, 
-                  and market data shown are for demonstration purposes. Please consult with a qualified financial advisor 
-                  before making any investment decisions. Past performance does not guarantee future results.
+      {/* Investment Options Section */}
+      <div className="py-16 sm:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          {/* Section Header */}
+          <FadeInAnimation>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                Explore Indian Stock Market
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Choose your investment journey with our comprehensive market analysis tools
+              </p>
+            </div>
+          </FadeInAnimation>
+
+          {/* Investment Options Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 mb-20">
+            
+            {/* Penny Stocks Card */}
+            <FadeInAnimation delay={200}>
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold text-white mb-2">Indian Penny Stocks</h3>
+                      <div className="flex items-center text-blue-100">
+                        <span className="text-3xl mr-3">🪙</span>
+                        <span className="text-lg">Top 100+ NSE Stocks</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-8">
+                  <p className="text-gray-600 text-lg leading-relaxed mb-6">
+                    Discover high-potential penny stocks from NSE with market caps under ₹500 crores. 
+                    Perfect for investors seeking growth opportunities in emerging companies with 
+                    detailed analysis of financials, charts, and market trends.
+                  </p>
+                  
+                  <div className="space-y-3 mb-8">
+                    <div className="flex items-center text-gray-700">
+                      <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Real-time price tracking and charts
+                    </div>
+                    <div className="flex items-center text-gray-700">
+                      <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Company fundamentals and financial metrics
+                    </div>
+                    <div className="flex items-center text-gray-700">
+                      <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Latest news and market sentiment analysis
+                    </div>
+                  </div>
+                  
+                  <Link 
+                    to="/penny-stocks" 
+                    className="w-full inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors duration-200"
+                  >
+                    Explore Penny Stocks
+                    <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            </FadeInAnimation>
+
+            {/* Mutual Funds Card */}
+            <FadeInAnimation delay={400}>
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                <div className="bg-gradient-to-r from-green-500 to-green-600 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold text-white mb-2">Indian Mutual Funds</h3>
+                      <div className="flex items-center text-green-100">
+                        <span className="text-3xl mr-3">📊</span>
+                        <span className="text-lg">2,500+ AMFI Registered Funds</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-8">
+                  <p className="text-gray-600 text-lg leading-relaxed mb-6">
+                    Explore comprehensive mutual fund analysis including equity, debt, and hybrid schemes. 
+                    Track NAV performance, expense ratios, and fund manager strategies across all major 
+                    Asset Management Companies in India.
+                  </p>
+                  
+                  <div className="space-y-3 mb-8">
+                    <div className="flex items-center text-gray-700">
+                      <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Daily NAV updates and performance tracking
+                    </div>
+                    <div className="flex items-center text-gray-700">
+                      <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Detailed fund analysis and comparisons
+                    </div>
+                    <div className="flex items-center text-gray-700">
+                      <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      SIP planning and investment recommendations
+                    </div>
+                  </div>
+                  
+                  <Link 
+                    to="/mutual-funds" 
+                    className="w-full inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors duration-200"
+                  >
+                    Explore Mutual Funds
+                    <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            </FadeInAnimation>
+          </div>
+
+          {/* Market Indices Section */}
+          <FadeInAnimation delay={600}>
+            <div className="mb-16">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                  Live Market Indices
+                </h2>
+                <p className="text-xl text-gray-600">
+                  Track real-time performance of major Indian stock market indices
                 </p>
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {marketIndices.map((index, i) => (
+                  <FadeInAnimation key={index.name} delay={700 + (i * 100)}>
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-200 hover:border-orange-200">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900">{index.name}</h3>
+                          <p className="text-sm text-gray-500">{index.description}</p>
+                        </div>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          index.positive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {index.positive ? '↗' : '↘'}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="text-2xl font-bold text-gray-900">
+                          {index.value}
+                        </div>
+                        <div className={`flex items-center text-sm font-medium ${
+                          index.positive ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          <span className="mr-2">{index.change}</span>
+                          <span>{index.changePercent}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </FadeInAnimation>
+                ))}
+              </div>
             </div>
-          </div>
-        </FadeInAnimation>
+          </FadeInAnimation>
+
+        </div>
       </div>
     </div>
   );
