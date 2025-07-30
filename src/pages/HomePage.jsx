@@ -1,67 +1,47 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import FadeInAnimation from '../components/FadeInAnimation';
+import IndianMarketOverview from '../components/IndianMarketOverview';
+import stockService from '../services/stockService';
+import mutualFundService from '../services/mutualFundService';
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [topGainers, setTopGainers] = useState([]);
+  const [topLosers, setTopLosers] = useState([]);
+  const [topMutualFunds, setTopMutualFunds] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Indian market indices data (keep your existing data)
-  const marketIndices = [
-    // ... your existing market indices data
-    { 
-      name: 'NIFTY 50', 
-      value: '24,010.90', 
-      change: '+285.75', 
-      changePercent: '+1.20%', 
-      positive: true,
-      description: 'Top 50 large-cap stocks'
-    },
-    { 
-      name: 'SENSEX', 
-      value: '78,765.86', 
-      change: '+628.50', 
-      changePercent: '+0.81%', 
-      positive: true,
-      description: 'BSE benchmark index'
-    },
-    { 
-      name: 'BANK NIFTY', 
-      value: '51,247.35', 
-      change: '-156.25', 
-      changePercent: '-0.30%', 
-      positive: false,
-      description: 'Banking sector index'
-    },
-    { 
-      name: 'NIFTY IT', 
-      value: '40,156.45', 
-      change: '+845.30', 
-      changePercent: '+2.15%', 
-      positive: true,
-      description: 'IT sector index'
-    },
-    { 
-      name: 'NIFTY AUTO', 
-      value: '23,456.80', 
-      change: '-124.45', 
-      changePercent: '-0.53%', 
-      positive: false,
-      description: 'Automobile sector index'
-    },
-    { 
-      name: 'NIFTY PHARMA', 
-      value: '18,234.65', 
-      change: '+298.75', 
-      changePercent: '+1.67%', 
-      positive: true,
-      description: 'Pharmaceutical sector index'
-    }
-  ];
+  // Fetch homepage data
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch top gainers, losers, and mutual funds in parallel
+        const [gainersData, losersData, fundsData] = await Promise.all([
+          stockService.getTopGainers(5),
+          stockService.getTopLosers(5),
+          mutualFundService.getTopPerformers('1Month', 5)
+        ]);
+
+        setTopGainers(gainersData);
+        setTopLosers(losersData);
+        setTopMutualFunds(fundsData);
+        
+      } catch (error) {
+        console.error('Failed to fetch homepage data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomeData();
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      // For now, redirect to penny stocks with search term
       window.location.href = `/penny-stocks?search=${encodeURIComponent(searchTerm)}`;
     }
   };
@@ -108,7 +88,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* MOVED SEARCH SECTION - RIGHT AFTER HERO */}
+      {/* Search Section */}
       <div id="search-section" className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeInAnimation>
@@ -165,6 +145,13 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Live Market Overview */}
+      <div className="py-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <IndianMarketOverview />
+        </div>
+      </div>
+
       {/* Investment Options Section */}
       <div className="py-16 sm:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -205,6 +192,28 @@ export default function HomePage() {
                     Perfect for investors seeking growth opportunities in emerging companies with 
                     detailed analysis of financials, charts, and market trends.
                   </p>
+                  
+                  {/* Top Gainers/Losers Preview */}
+                  {!loading && (topGainers.length > 0 || topLosers.length > 0) && (
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div>
+                        <h4 className="text-sm font-semibold text-green-600 mb-2">Top Gainers</h4>
+                        {topGainers.slice(0, 3).map(stock => (
+                          <div key={stock.ticker} className="text-xs text-gray-600 mb-1">
+                            {stock.ticker}: +{stock.dayChangePercent?.toFixed(2)}%
+                          </div>
+                        ))}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-red-600 mb-2">Top Losers</h4>
+                        {topLosers.slice(0, 3).map(stock => (
+                          <div key={stock.ticker} className="text-xs text-gray-600 mb-1">
+                            {stock.ticker}: {stock.dayChangePercent?.toFixed(2)}%
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="space-y-3 mb-8">
                     <div className="flex items-center text-gray-700">
@@ -262,6 +271,18 @@ export default function HomePage() {
                     Asset Management Companies in India.
                   </p>
                   
+                  {/* Top Mutual Funds Preview */}
+                  {!loading && topMutualFunds.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="text-sm font-semibold text-green-600 mb-2">Top Performers (1M)</h4>
+                      {topMutualFunds.slice(0, 3).map(fund => (
+                        <div key={fund.schemeCode} className="text-xs text-gray-600 mb-1">
+                          {fund.schemeName?.split(' ').slice(0, 4).join(' ')}...
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
                   <div className="space-y-3 mb-8">
                     <div className="flex items-center text-gray-700">
                       <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -296,53 +317,6 @@ export default function HomePage() {
               </div>
             </FadeInAnimation>
           </div>
-
-          {/* Market Indices Section */}
-          <FadeInAnimation delay={600}>
-            <div className="mb-16">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-                  Live Market Indices
-                </h2>
-                <p className="text-xl text-gray-600">
-                  Track real-time performance of major Indian stock market indices
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {marketIndices.map((index, i) => (
-                  <FadeInAnimation key={index.name} delay={700 + (i * 100)}>
-                    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-200 hover:border-orange-200">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900">{index.name}</h3>
-                          <p className="text-sm text-gray-500">{index.description}</p>
-                        </div>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          index.positive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {index.positive ? '↗' : '↘'}
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="text-2xl font-bold text-gray-900">
-                          {index.value}
-                        </div>
-                        <div className={`flex items-center text-sm font-medium ${
-                          index.positive ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          <span className="mr-2">{index.change}</span>
-                          <span>{index.changePercent}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </FadeInAnimation>
-                ))}
-              </div>
-            </div>
-          </FadeInAnimation>
-
         </div>
       </div>
     </div>

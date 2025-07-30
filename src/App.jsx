@@ -3,6 +3,7 @@ import Layout from './layouts/Layout';
 import HomePage from './pages/HomePage';
 import PennyStocks from './pages/PennyStocks';
 import MutualFunds from './pages/MutualFunds';
+import MutualFundDetails from './pages/MutualFundDetails';
 import StockDetails from './pages/StockDetails';
 import AboutPage from './pages/AboutPage';
 import Watchlist from './pages/Watchlist';
@@ -11,6 +12,7 @@ import Signup from './pages/Signup';
 import NotFound from './pages/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
+
 
 function App() {
   return (
@@ -64,7 +66,7 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
-          
+           <Route path="/mutual-fund/:schemeCode" element={<MutualFundDetails />} />
           {/* 404 Route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
