@@ -1,3 +1,5 @@
+import { WS_URL, DEBUG_WEBSOCKET } from '../config/config.js';
+
 class WebSocketService {
   constructor() {
     this.ws = null;
@@ -12,8 +14,14 @@ class WebSocketService {
   // Connect to WebSocket server
   connect() {
     try {
-      const wsUrl = `ws://localhost:5000/ws`;
-      console.log('🔄 Connecting to WebSocket server...');
+      // Use dynamic URL from config instead of hardcoded localhost
+      const wsUrl = WS_URL;
+      
+      if (DEBUG_WEBSOCKET) {
+        console.log('🔄 Connecting to WebSocket server...', wsUrl);
+      } else {
+        console.log('🔄 Connecting to WebSocket server...');
+      }
       
       this.ws = new WebSocket(wsUrl);
       
@@ -39,7 +47,11 @@ class WebSocketService {
       };
 
       this.ws.onclose = (event) => {
-        console.log('🔌 WebSocket connection closed:', event.code, event.reason);
+        if (DEBUG_WEBSOCKET) {
+          console.log('🔌 WebSocket connection closed:', event.code, event.reason);
+        } else {
+          console.log('🔌 WebSocket connection closed');
+        }
         this.isConnected = false;
         this.stopHeartbeat();
         
@@ -62,7 +74,9 @@ class WebSocketService {
 
   // Handle incoming WebSocket messages
   handleMessage(data) {
-    console.log('📨 WebSocket message received:', data.type);
+    if (DEBUG_WEBSOCKET) {
+      console.log('📨 WebSocket message received:', data.type);
+    }
     
     switch (data.type) {
       case 'connection':
@@ -70,17 +84,24 @@ class WebSocketService {
         break;
         
       case 'price_update':
-        console.log('📈 Price update:', data.data.ticker, '₹' + data.data.currentPrice);
+        if (DEBUG_WEBSOCKET) {
+          console.log('📈 Price update:', data.data.ticker, '₹' + data.data.currentPrice);
+        }
         this.notifySubscribers('price_update', data.data);
         break;
         
       case 'subscription_success':
-        console.log('✅ Subscription successful:', data.subscribedTickers);
+        if (DEBUG_WEBSOCKET) {
+          console.log('✅ Subscription successful:', data.subscribedTickers);
+        }
         this.notifySubscribers('subscription_success', data);
         break;
         
       case 'pong':
         // Server responded to ping
+        if (DEBUG_WEBSOCKET) {
+          console.log('🏓 Pong received from server');
+        }
         break;
         
       case 'error':
@@ -89,7 +110,9 @@ class WebSocketService {
         break;
         
       default:
-        console.log('📋 Unknown message type:', data.type, data);
+        if (DEBUG_WEBSOCKET) {
+          console.log('📋 Unknown message type:', data.type, data);
+        }
     }
   }
 
@@ -117,7 +140,9 @@ class WebSocketService {
       console.warn('⚠️ WebSocket not connected, subscription will be sent when connected');
     }
 
-    console.log('🔔 Subscribed to tickers:', tickers);
+    if (DEBUG_WEBSOCKET) {
+      console.log('🔔 Subscribed to tickers:', tickers);
+    }
   }
 
   // Unsubscribe from stock price updates
@@ -145,7 +170,9 @@ class WebSocketService {
       });
     }
 
-    console.log('🔕 Unsubscribed from tickers:', tickers);
+    if (DEBUG_WEBSOCKET) {
+      console.log('🔕 Unsubscribed from tickers:', tickers);
+    }
   }
 
   // Send message to WebSocket server
@@ -153,6 +180,9 @@ class WebSocketService {
     if (this.isConnected && this.ws.readyState === WebSocket.OPEN) {
       try {
         this.ws.send(JSON.stringify(message));
+        if (DEBUG_WEBSOCKET && message.type !== 'ping') {
+          console.log('📤 Sent WebSocket message:', message.type);
+        }
       } catch (error) {
         console.error('❌ Error sending WebSocket message:', error);
       }
@@ -216,7 +246,9 @@ class WebSocketService {
     this.reconnectAttempts++;
     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000); // Exponential backoff, max 30s
 
-    console.log(`🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms...`);
+    if (DEBUG_WEBSOCKET) {
+      console.log(`🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms...`);
+    }
 
     this.reconnectInterval = setTimeout(() => {
       this.connect();
@@ -248,7 +280,8 @@ class WebSocketService {
     return {
       isConnected: this.isConnected,
       reconnectAttempts: this.reconnectAttempts,
-      subscribedTickers: Array.from(this.subscribers.keys())
+      subscribedTickers: Array.from(this.subscribers.keys()),
+      wsUrl: WS_URL // Added URL info for debugging
     };
   }
 }

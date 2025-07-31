@@ -8,8 +8,8 @@ class AuthService {
       const { token, data } = response.data;
       
       // Store token and user data
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('userData', JSON.stringify(data));
+      localStorage.setItem('token', token);  // Fixed: changed 'authToken' to 'token'
+      localStorage.setItem('user', JSON.stringify(data));  // Fixed: changed 'userData' to 'user'
       
       return response.data;
     } catch (error) {
@@ -20,15 +20,22 @@ class AuthService {
   // Login user
   async login(email, password) {
     try {
+      console.log('🔐 AuthService: Attempting login...');
       const response = await api.post('/auth/login', { email, password });
       const { token, data } = response.data;
       
+      console.log('✅ Login response received, storing token...');
+      
       // Store token and user data
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('userData', JSON.stringify(data));
+      localStorage.setItem('token', token);  // Fixed: changed 'authToken' to 'token'
+      localStorage.setItem('user', JSON.stringify(data));  // Fixed: changed 'userData' to 'user'
+      
+      console.log('🔑 Token stored:', !!token);
+      console.log('👤 User data stored:', !!data);
       
       return response.data;
     } catch (error) {
+      console.error('❌ Login error:', error.response?.data || error.message);
       throw new Error(error.response?.data?.message || 'Login failed');
     }
   }
@@ -41,8 +48,8 @@ class AuthService {
       console.warn('Logout API call failed:', error.message);
     } finally {
       // Always clear local storage
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
+      localStorage.removeItem('token');  // Fixed: changed 'authToken' to 'token'
+      localStorage.removeItem('user');  // Fixed: changed 'userData' to 'user'
     }
   }
 
@@ -62,7 +69,7 @@ class AuthService {
       const response = await api.put('/auth/updatedetails', userData);
       
       // Update stored user data
-      localStorage.setItem('userData', JSON.stringify(response.data.data));
+      localStorage.setItem('user', JSON.stringify(response.data.data));  // Fixed: changed 'userData' to 'user'
       
       return response.data.data;
     } catch (error) {
@@ -85,20 +92,20 @@ class AuthService {
 
   // Check if user is logged in
   isAuthenticated() {
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData');
+    const token = localStorage.getItem('token');  // Fixed: changed 'authToken' to 'token'
+    const userData = localStorage.getItem('user');  // Fixed: changed 'userData' to 'user'
     return !!(token && userData);
   }
 
   // Get stored user data
   getUserData() {
-    const userData = localStorage.getItem('userData');
+    const userData = localStorage.getItem('user');  // Fixed: changed 'userData' to 'user'
     return userData ? JSON.parse(userData) : null;
   }
 
   // Get stored token
   getToken() {
-    return localStorage.getItem('authToken');
+    return localStorage.getItem('token');  // Fixed: changed 'authToken' to 'token'
   }
 }
 
