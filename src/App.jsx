@@ -3,7 +3,7 @@ import Layout from './layouts/Layout';
 import HomePage from './pages/HomePage';
 import PennyStocks from './pages/PennyStocks';
 import MutualFunds from './pages/MutualFunds';
-import MutualFundDetails from './pages/MutualFundDetails';
+import MutualFundDetails from './pages/MutualFunddetails';
 import StockDetails from './pages/StockDetails';
 import AboutPage from './pages/AboutPage';
 import Watchlist from './pages/Watchlist';
